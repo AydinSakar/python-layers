@@ -1,6 +1,9 @@
-## FoundationDB Blob Layer. 
-## This layers allows FoundationDB to store amount of large binary
-## data withing a subspace of keys
+"""FoundationDB Blob Layer.
+
+Provides the Blob() class for storing potentially large binary objects
+in FoundationDB.
+
+"""
 
 import fdb
 import fdb.tuple
@@ -26,7 +29,6 @@ class Subspace (object):
         p = fdb.tuple.range( tuple )
         return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
 
-
 ########
 # Blob #
 ########
@@ -36,9 +38,12 @@ ATTRIBUTE_KEY = 'A'
 DATA_KEY = 'D'
 CHUNK_LARGE = 10000 # all chunks will be not greater than this size
 CHUNK_SMALL = 200 # all adjacent chunks will sum to more than this size
-        
+
 class Blob(object):
+    """Represents a potentially large binary value in FoundationDB."""
+
 # private functions
+
     def _internal_storage_key(self):
         return self.subspace.pack( (ATTRIBUTE_KEY,) )
 
@@ -105,28 +110,25 @@ class Blob(object):
         tr[self._size_key()] = str(size)
 
 ## public functions below            
-            
+
     def __init__(self, subspace):
         """
-        Creates a new object representing a binary large object (blob).
+        Create a new object representing a binary large object (blob).
         
-        Only keys withing the subspace will be used by the object. Other clients 
-        of the database should refrain from from modifying within the subspace
+        Only keys within the subspace will be used by the
+        object. Other clients of the database should refrain from
+        modifying the subspace.
         """
         self.subspace = subspace
 
     @fdb.transactional
     def delete(self, tr):
-        """
-        Deletes all key-value pairs associated with the blob
-        
-        (the keys that start with the subspace passed at init time)
-        """
+        """Delete all key-value pairs associated with the blob."""
         del tr[self.subspace.range()]
 
     @fdb.transactional
     def get_size(self, tr):
-        """Gets the size of the blob"""
+        """Get the size of the blob."""
         try:
             return int(tr[self._size_key()])
         except (ValueError, TypeError):
@@ -135,8 +137,9 @@ class Blob(object):
     @fdb.transactional
     def read(self, tr, offset, n):
         """
-        Read from the blob, starting at offset, retrieving up to n bytes
-        (less then n bytes are returned when the end of he blob is reached)
+        Read from the blob, starting at offset, retrieving up to n
+        bytes (fewer then n bytes are returned when the end of the
+        blob is reached).
         """
         chunks = tr.get_range(
             fdb.KeySelector.last_less_or_equal(self._data_key(offset)),
@@ -156,9 +159,9 @@ class Blob(object):
     @fdb.transactional
     def write(self, tr, offset, data):
         """
-        Writes data to the blob, starting at offset and overwriting
-        any existing data at that location. The length of the blob 
-        is increased if necessary.
+        Write data to the blob, starting at offset and overwriting any
+        existing data at that location. The length of the blob is
+        increased if necessary.
         """
         if not len(data): return
         end = offset+len(data)
@@ -173,7 +176,7 @@ class Blob(object):
 
     @fdb.transactional
     def append(self, tr, data):
-        """Appends the contents of data onto the end of the blob"""
+        """Append the contents of data onto the end of the blob."""
         if not len(data): return
         oldLength = self.get_size(tr)
         self._write_to_sparse(tr, oldLength, data)
@@ -183,35 +186,34 @@ class Blob(object):
     @fdb.transactional
     def truncate(self, tr, new_length):
         """
-        Changes the blob length to new_length, erasing any data
-        when shrinking, and filling new bytes with 0 when growing.
+        Change the blob length to new_length, erasing any data when
+        shrinking, and filling new bytes with 0 when growing.
         """
         self._make_sparse(tr, new_length, int(tr[self._size_key()]))
         tr[self._size_key()] = str(new_length)
-        
 
 ###################
 ##    Example    ##
 ###################        
 
-import time
-
-db = fdb.open()
-     
 @fdb.transactional
 def print_blob(tr, b):
     s = b.get_size(tr)
     print "blob is", s, "bytes:"
     print b.read(tr, 0, s)
-     
+
 def test_blob():
+    import time
+
+    db = fdb.open()
+
     location = Subspace(('testblob',))
-    
+
     b = Blob(location)
-    
+
     print "deleting old"
     b.delete(db)
-    
+
     print "writing"
     b.append(db, 'asdf')
     b.append(db, 'jkl;')
@@ -219,7 +221,7 @@ def test_blob():
     b.append(db, 'bar')
 
     print_blob(db, b)
-     
+
     big_data = 1000000
     print "writing lots of data"
     for i in range(50):
@@ -233,6 +235,5 @@ def test_blob():
     assert s == big_data
     print "got big section of blob"
 
-    
 if __name__ == "__main__":
     test_blob()

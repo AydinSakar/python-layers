@@ -1,7 +1,10 @@
-## counter.py is a layer for FoundationDB for counting a variable that is 
-## updated concurrently by many clients. It avoids transaction conflicts by dynamically
-## spreading (sharding) the counter state and randomly coalescing the shards in the
-## background.
+"""FoundationDB High Contention Counter.
+
+Provides the Counter class, which represents an integer value in the
+database which can be incremented, added to, or subtracted from within
+a transaction without conflict.
+
+"""
 
 import fdb
 import fdb.tuple
@@ -44,7 +47,13 @@ def randID():
     return os.urandom(20) # this relies on good random data from the OS to avoid collisions
 
 class Counter:
-        
+    """Represents an integer value which can be incremented without conflict.
+
+    Uses a sharded representation (which scales with contention) along
+    with background coalescing.
+
+    """
+
     def __init__(self, db, subspace):
         self.subspace = subspace
         self.db = db
@@ -83,11 +92,10 @@ class Counter:
 
     @fdb.transactional
     def get_transactional(self, tr):
-        """
-        Gets the value of the counter
+        """Get the value of the counter.
         
         Not recommended for use with read/write transactions when the counter
-        is being frequently updated (conflicts will be very likely)
+        is being frequently updated (conflicts will be very likely).
         """
         total = 0
         for k,v in tr[self.subspace.range()]:
@@ -97,7 +105,8 @@ class Counter:
     @fdb.transactional
     def get_snapshot(self, tr):
         """
-        Gets the value of the counter with snapshot isolation (no transaction conflicts)
+        Get the value of the counter with snapshot isolation (no
+        transaction conflicts).
         """
         total = 0
         for k,v in tr.snapshot[self.subspace.range()]:
@@ -106,9 +115,7 @@ class Counter:
     
     @fdb.transactional
     def add(self, tr, x):
-        """
-        adds the value x to the counter
-        """
+        """Add the value x to the counter."""
 
         tr[self.subspace.pack((randID(),))] = _encode_int(x)
         
@@ -119,6 +126,7 @@ class Counter:
     ## sets the counter to the value x
     @fdb.transactional
     def set_total(self, tr, x):
+        """Set the counter to value x."""
         value = self.get_snapshot(tr)
         self.add(tr, x - value)
 
@@ -126,7 +134,7 @@ class Counter:
 # simple example #
 ##################
 
-def counter_example_1(location):
+def counter_example_1(db, location):
     
     location = Subspace( ('bigcounter',) )
     c = Counter(db, location)
@@ -139,13 +147,12 @@ def counter_example_1(location):
 # high-contention, threaded example #
 #####################################
 
-import threading
-
 def incrementer_thread(counter, db, n):
     for i in range(n):
         counter.add(db, 1)
 
-def counter_example_2(location):
+def counter_example_2(db, location):
+    import threading
     
     c = Counter(db, location)
 
@@ -159,15 +166,14 @@ def counter_example_2(location):
     print c.get_snapshot(db) #500
 
 if __name__ == "__main__":
-    global db
     db = fdb.open()
     location = Subspace( ('bigcounter',) )
     del db[location.range()]
     
     print "doing 500 inserts in 50 threads"
-    counter_example_2(location)
+    counter_example_2(db, location)
     print len(db[:]), "counter shards remain in database"
 
     print "doing 500 inserts in one thread"
-    counter_example_1(location)
+    counter_example_1(db, location)
     print len(db[:]), "counter shards remain in database"
