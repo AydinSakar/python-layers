@@ -57,12 +57,12 @@ class Counter:
     def __init__(self, db, subspace):
         self.subspace = subspace
         self.db = db
-        
+
     def _coalesce(self, N):
         total = 0
         tr = self.db.create_transaction()
         try:
-        
+
             # read N writes from a random place in ID space
             loc = self.subspace.pack((randID(),))
             if random.random() < 0.5:
@@ -75,9 +75,9 @@ class Counter:
                 total += _decode_int(v)
                 tr[k] # real read for isolation
                 del tr[k]
-                
+
             tr[self.subspace.pack((randID(),))] = _encode_int(total)
-                
+
             ## note: no .wait() on the commit below--this just goes off
             ## into the ether and hopefully sometimes works :)
             ##
@@ -86,14 +86,14 @@ class Counter:
             c = tr.commit()
             def hold(_,tr=tr): pass
             c.on_ready(hold)
-            
+
         except fdb.FDBError as e:
             pass
 
     @fdb.transactional
     def get_transactional(self, tr):
         """Get the value of the counter.
-        
+
         Not recommended for use with read/write transactions when the counter
         is being frequently updated (conflicts will be very likely).
         """
@@ -101,7 +101,7 @@ class Counter:
         for k,v in tr[self.subspace.range()]:
             total += _decode_int(v)
         return total
-    
+
     @fdb.transactional
     def get_snapshot(self, tr):
         """
@@ -112,13 +112,13 @@ class Counter:
         for k,v in tr.snapshot[self.subspace.range()]:
             total += _decode_int(v)
         return total
-    
+
     @fdb.transactional
     def add(self, tr, x):
         """Add the value x to the counter."""
 
         tr[self.subspace.pack((randID(),))] = _encode_int(x)
-        
+
         # Sometimes, coalesce the counter shards
         if random.random() < 0.1:
             self._coalesce(20)
@@ -135,10 +135,10 @@ class Counter:
 ##################
 
 def counter_example_1(db, location):
-    
+
     location = Subspace( ('bigcounter',) )
     c = Counter(db, location)
-    
+
     for i in range(500):
         c.add(db, 1)
     print c.get_snapshot(db) #500
@@ -153,7 +153,7 @@ def incrementer_thread(counter, db, n):
 
 def counter_example_2(db, location):
     import threading
-    
+
     c = Counter(db, location)
 
     ## 50 incrementer_threads, each doing 10 increments
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     db = fdb.open()
     location = Subspace( ('bigcounter',) )
     del db[location.range()]
-    
+
     print "doing 500 inserts in 50 threads"
     counter_example_2(db, location)
     print len(db[:]), "counter shards remain in database"

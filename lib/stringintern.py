@@ -1,6 +1,9 @@
-## This is a sample layers to provide string interning using FoundationDB.
-## String interning (aka normalizing, aliasing) is a technique for encoding
-## commonly used long strings into shorter representations.
+"""FoundationDB String Interning Layer.
+
+Provides the StringIntern() class for interning (aka normalizing,
+aliasing) commonly-used long strings into shorter representations.
+
+"""
 
 import fdb
 import fdb.tuple
@@ -41,7 +44,7 @@ class StringIntern (object):
     STRING_UID = 'S'
     UID_STRING = 'U'
     CACHE_LIMIT_BYTES = 10000000
-    
+
     def uid_key(self, u): return self.subspace.pack((StringIntern.UID_STRING, u))
     def string_key(self, s): return self.subspace.pack((StringIntern.STRING_UID, s))
 
@@ -73,7 +76,7 @@ class StringIntern (object):
 
         size = (len(s) + len(u)) * 2
         self.bytes_cached -= size
-        
+
 
     def _add_to_cache(self, s, u):
         while self.bytes_cached > StringIntern.CACHE_LIMIT_BYTES:
@@ -83,7 +86,7 @@ class StringIntern (object):
             self.string_uid_cache[s] = u
             self.uid_string_cache[u] = s
             self.uids_in_cache.append(u)
-            
+
             size = (len(s) + len(u)) * 2
             self.bytes_cached += size
 
@@ -98,33 +101,36 @@ class StringIntern (object):
                 return u
             tries += 1
 
-    ## intern looks up string s in the intern database and
-    ## returns its normalized representation. If s already exists,
-    ## intern returns the existing representation.
-    ##
-    ## s must fit within a FoundationDB value.
     @fdb.transactional
     def intern(self, tr, s):
+        """
+        Look up string s in the intern database and return its
+        normalized representation. If s already exists, intern returns
+        the existing representation.
+
+        s must fit within a FoundationDB value.
+        """
         if s in self.string_uid_cache:
             return self.string_uid_cache[s]
         u = tr[self.string_key(s)]
         if u==None:
             newU = self._find_uid(tr)
-            
+
             tr[self.uid_key(newU)] = s
             tr[self.string_key(s)] = newU
-            
+
             self._add_to_cache(s, newU)
             return newU
         else:
             self._add_to_cache(s, u)
             return u
 
-            
-    ## lookup takes a normalized representation and finds the 
-    ## associated long string
     @fdb.transactional
     def lookup(self, tr, u):
+        """
+        Return the long string associated with the normalized
+        representation u.
+        """
         if u in self.uid_string_cache:
             return self.uid_string_cache[u]
         s = tr[self.uid_key(u)]
@@ -132,8 +138,11 @@ class StringIntern (object):
             raise Exception('String intern identifier not found')
         self._add_to_cache(s, u)
         return s            
-    
-## caution: modifies the database
+
+###################
+##    Example    ##
+###################        
+
 def stringintern_example():
     db = fdb.open()
 
@@ -153,4 +162,6 @@ def stringintern_example():
     tr = db.create_transaction()
     for k,v in tr['0':'9']:
         print k, '=', strs.lookup(tr, v)
-    
+
+if __name__ == "__main__":
+    stringintern_example()

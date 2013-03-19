@@ -55,7 +55,7 @@ class Blob(object):
 
     def _size_key(self):
         return self.subspace.pack( (SIZE_KEY,) )
-    
+
     # returns (key, data, startOffset) or (None, None, None)
     @fdb.transactional
     def _get_chunk_at(self, tr, offset):
@@ -95,7 +95,7 @@ class Blob(object):
         del tr[bKey]
         tr[aKey] = aData+bData
         return True
-        
+
     @fdb.transactional
     def _write_to_sparse(self, tr, offset, data):
         if not len(data): return
@@ -114,7 +114,7 @@ class Blob(object):
     def __init__(self, subspace):
         """
         Create a new object representing a binary large object (blob).
-        
+
         Only keys within the subspace will be used by the
         object. Other clients of the database should refrain from
         modifying the subspace.

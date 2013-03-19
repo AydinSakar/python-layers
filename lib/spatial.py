@@ -1,6 +1,11 @@
-## This is an example 2D spatial index for FoundationDB.
-## It provides efficient queries of the points within an axis-aligned rectangle
-## by using a z-order fractal curve for dimensionality reduction.
+"""FoundationDB Spatial Index Layer.
+
+Provides the SpatialIndex() class, an example 2D spatial index for
+FoundationDB. It provides efficient queries of the points within an
+axis-aligned rectangle by using a z-order fractal curve for
+dimensionality reduction.
+
+"""
 
 import fdb
 import fdb.tuple
@@ -9,9 +14,6 @@ fdb.api_version(21)
 
 verbose = False
 printLevels = 3
-
-# 0 1
-# 2 3
 
 def xy_to_z(p):
     m = list(p)
@@ -33,7 +35,6 @@ def z_to_xy(z):
             z >>= 1
         l += 1
     return tuple(m)
-            
 
 ## Rect represents an axis-aligned rectangular region
 ## ul = upper-left point (inclusive)
@@ -43,13 +44,13 @@ class Rect:
     def __init__(self, ul, lr):
         self.ul = ul
         self.lr = lr # exclusive
-        
+
     def intersect_point(self, p):
         for i in range(2):
             if p[i] < self.ul[i] or p[i] >= self.lr[i]:
                 return False
         return True
-    
+
     def intersect_rect(self, r):
         for i in range(2):
             if self.ul[i] >= r.lr[i] or r.ul[i] >= self.lr[i]:
@@ -95,7 +96,7 @@ class Rect:
             if self.intersect_point(z_to_xy(i)):
                 return i
         return None
-        
+
 
     def z_next_intersect(self, z):
         max_z = xy_to_z(self.lr)
@@ -106,7 +107,7 @@ class Rect:
         r = Rect(p, (p[0]+1, p[1]+1))
 
         if verbose: print "starting search for next z", r
-        
+
         # Look for intersections in larger rects with a greater z score
         while True:
             r, z_num = r.larger_aligned_rect()
@@ -115,7 +116,7 @@ class Rect:
             if z_num == 0 and xy_to_z((r.size()/2,0)) > max_z:
                 if verbose: print "Aborting: larger rects will not intersect"
                 return None
-            
+
             found = False
             for sri in range(z_num+1, 4):
                 sr = r.smaller_aligned_rect(sri)
@@ -157,7 +158,7 @@ class Rect:
             print "next(",z,") ==",r1,"but reports", r2
             assert False
         return r2
-            
+
 ###################################
 # This defines a Subspace of keys #
 ###################################
@@ -181,7 +182,7 @@ class Subspace (object):
 ################
 # SpatialIndex #
 ################
-    
+
 ## SpatialIndex associates an identifier (key) with an non-negative
 ## integral 2D location and allows efficiently finding all such keys
 ## within a rectangular 2D region
@@ -206,7 +207,7 @@ class SpatialIndex():
     @fdb.transactional
     def clear(self, tr):
         del tr[self.subspace.range()]
-        
+
     @fdb.transactional
     def set_location(self, tr, key, pos):
         assert self.validLocation(pos)
@@ -216,7 +217,7 @@ class SpatialIndex():
             oldz = self.key_z.unpack(existing_z[0].key)[-1]
             del tr[self.key_z.pack((key, oldz))]
             del tr[self.z_key.pack((oldz, key))]
-        
+
         tr[self.z_key.pack((z, key))] = ''
         tr[self.key_z.pack((key, z))] = ''
 
@@ -255,7 +256,7 @@ class SpatialIndex():
                 results.append((foundkey, xy))
             if done: break
         return results
-            
+
 
 def z_print():
     for y in range(1<<printLevels):
@@ -263,7 +264,7 @@ def z_print():
             assert z_to_xy(xy_to_z((x,y))) == (x,y)
             print "%4d" % xy_to_z((x, y)) ,
         print ""
-        
+
 
 import random
 
@@ -277,8 +278,6 @@ def internal_test1():
         i = ri()
         j = ri()
         assert xy_to_z((i,j)) == xy_to_z((i,j)), "fail on %d %d" % (i, j)
-
-# test()        
 
 def internal_test2():
     del db[:]
@@ -305,9 +304,6 @@ def internal_test2():
     print b
     assert a==b
 
-# while True:
-#     test2()
-
 ##############################
 # Spatial Index sample usage #
 ##############################
@@ -317,7 +313,7 @@ def spatial_example():
     db = fdb.open()
     index_location = Subspace( ('s_index', ) )
     s = SpatialIndex( index_location )
-    
+
     s.clear(db)
 
     print "point d is at", s.get_location(db, 'd')
@@ -332,3 +328,6 @@ def spatial_example():
 
     print "Searching in rectangle (1,1) -> (5,5):"
     print s.get_in_rectangle(db, Rect((1,1), (5,5)))
+
+if __name__ == "__main__":
+    spatial_example()
