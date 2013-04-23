@@ -7,7 +7,7 @@ in FoundationDB.
 
 import fdb
 import fdb.tuple
-fdb.api_version(21)
+fdb.api_version(22)
 
 ###################################
 # This defines a Subspace of keys #
