@@ -12,6 +12,7 @@ import os
 
 fdb.api_version(22)
 
+
 ###################################
 # This defines a Subspace of keys #
 ###################################
@@ -32,6 +33,7 @@ class Subspace (object):
         p = fdb.tuple.range( tuple )
         return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
 
+
 ################
 # StringIntern #
 ################
@@ -40,12 +42,14 @@ class Subspace (object):
 ## frequently-used items is maintained. Use the intern() and lookup()
 ## functions.
 
+
 class StringIntern (object):
     STRING_UID = 'S'
     UID_STRING = 'U'
     CACHE_LIMIT_BYTES = 10000000
 
     def uid_key(self, u): return self.subspace.pack((StringIntern.UID_STRING, u))
+
     def string_key(self, s): return self.subspace.pack((StringIntern.STRING_UID, s))
 
     def __init__(self, subspace):
@@ -68,7 +72,7 @@ class StringIntern (object):
 
         # remove from caches, account for bytes
         s = self.uid_string_cache[u]
-        if s == None:
+        if s is None:
             raise Exception('Error in cache eviction: string not found')
 
         del self.uid_string_cache[u]
@@ -76,7 +80,6 @@ class StringIntern (object):
 
         size = (len(s) + len(u)) * 2
         self.bytes_cached -= size
-
 
     def _add_to_cache(self, s, u):
         while self.bytes_cached > StringIntern.CACHE_LIMIT_BYTES:
@@ -102,28 +105,36 @@ class StringIntern (object):
             tries += 1
 
     @fdb.transactional
+    def _intern_in_db(self, tr, s):
+        """
+        Look up string s in the intern database and return its normalized
+        representation if it already exists. Otherwise, create and record
+        the normalized representation before returning it.
+
+        s must fit within a FoundationDB value.
+        """
+        u = tr[self.string_key(s)]
+        if u.present():
+            return u
+        else:
+            newU = self._find_uid(tr)
+            tr[self.uid_key(newU)] = s
+            tr[self.string_key(s)] = newU
+            return newU
+
     def intern(self, tr, s):
         """
-        Look up string s in the intern database and return its
-        normalized representation. If s already exists, intern returns
-        the existing representation.
+        Look up string s and return its normalized representation, using the
+        copy in the cache, if present. Otherwise, intern representation in the
+        database and add it to the cache before returning it.
 
         s must fit within a FoundationDB value.
         """
         if s in self.string_uid_cache:
             return self.string_uid_cache[s]
-        u = tr[self.string_key(s)]
-        if u==None:
-            newU = self._find_uid(tr)
-
-            tr[self.uid_key(newU)] = s
-            tr[self.string_key(s)] = newU
-
-            self._add_to_cache(s, newU)
-            return newU
-        else:
-            self._add_to_cache(s, u)
-            return u
+        u = self._intern_in_db(tr, s)
+        self._add_to_cache(s, u)
+        return u
 
     @fdb.transactional
     def lookup(self, tr, u):
@@ -134,22 +145,23 @@ class StringIntern (object):
         if u in self.uid_string_cache:
             return self.uid_string_cache[u]
         s = tr[self.uid_key(u)]
-        if s==None:
+        if s is None:
             raise Exception('String intern identifier not found')
         self._add_to_cache(s, u)
-        return s            
+        return s
+
 
 ###################
 ##    Example    ##
-###################        
+###################
+
 
 def stringintern_example():
     db = fdb.open()
 
-    location = Subspace( ('BigStrings',) )
-    strs = StringIntern( location )
+    location = Subspace(('BigStrings',))
+    strs = StringIntern(location)
 
-    @fdb.transactional
     def test_insert(tr):
         tr["0"] = strs.intern(tr, "testing 123456789")
         tr["1"] = strs.intern(tr, "dog")
