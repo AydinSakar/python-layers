@@ -733,28 +733,7 @@ class KeyIndex (OrderedIndex):
 #  - pets.<pet_name>.color.<value>.
 #  - pets.<pet_name>.owners.<owner_name_N>.''
 
-
-# Create indexes
-
-# Index documents matching pets.? on the *value* of pets.?.species
-# Supports queries to find all pets of a given species
-species_index = OrderedIndex("pets.?", "species")
-
-# Index documents matching pets.? on the *value* of pets.?.vacation
-# Supports queries to find all pets on vacation
-vacation_index = OrderedIndex("pets.?", "vacation")
-
-# Index documents matching pets.? on the *key* pets.?.owners.?
-# Supports queries to find all pets owned by a given owner
-owner_index = KeyIndex("pets.?", "owners.?")
-
-# Use pets collection within SimpleDoc database
-pets = root.pets
-
-
 # Insert data
-
-
 @transactional
 def set_sample_data():
     root.clear_all()
@@ -846,4 +825,16 @@ def simpledoc_example():
     print "Pets with owners on vacation: ", pets_on_vacation(db)
 
 if __name__ == "__main__":
+    # Create indexes
+    # Index documents matching pets.? on the *value* of pets.?.species
+    # Supports queries to find all pets of a given species
+    species_index = OrderedIndex("pets.?", "species")
+    # Index documents matching pets.? on the *value* of pets.?.vacation
+    # Supports queries to find all pets on vacation
+    vacation_index = OrderedIndex("pets.?", "vacation")
+    # Index documents matching pets.? on the *key* pets.?.owners.?
+    # Supports queries to find all pets owned by a given owner
+    owner_index = KeyIndex("pets.?", "owners.?")
+    # Use pets collection within SimpleDoc database
+    pets = root.pets
     simpledoc_example()
