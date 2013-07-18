@@ -17,9 +17,13 @@ The layers:
 -----------
 
  * **blob.py** - Arbitrary-sized and sparse large binary objects.
- * **counter.py** - A high performance counter that uses advanced techniques to dynamically shard itself under high contention conditions.
+ * **counter.py** - High performance counters that uses advanced techniques to dynamically shard itself under high contention conditions.
+ * **pubsub.py** - Message passing according to the publish-subscribe pattern. Allows management of feeds and inboxes as well as message delivery.
+ * **queue.py** - Queues supporting a high contention mode for multiple clients and an optimized mode for single clients.
+ * **simpledoc.py** - A simple, hierarchical data model for storing document-oriented data. Supports a powerful plugin capability with indexes.
  * **spatial.py** - A spatial index for 2D points that allows efficient queries of axis-aligned rectangular regions. Does dimensionality reduction via a Z-order fractal curve (aka geohash).
  * **stringintern.py** - For interning (aka normalizing, aliasing) commonly-used long strings into shorter representations. Maintains the normalization state in the database, as well as a local cache for high performance.
+ * **vector.py** - Vectors for storing and manipulating potentially sparse arrays.
 
 Next steps
 ----------
