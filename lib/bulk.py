@@ -32,7 +32,7 @@ import fdb
 import fdb.tuple
 import simpledoc
 
-fdb.api_version(22)
+fdb.api_version(23)
 
 db = fdb.open(event_model="gevent")
 

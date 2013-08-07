@@ -9,7 +9,7 @@ import fdb.tuple
 
 import threading
 
-fdb.api_version(22)
+fdb.api_version(23)
 
 ###################################
 # This defines a Subspace of keys #

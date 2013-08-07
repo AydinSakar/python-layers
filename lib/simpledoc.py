@@ -28,7 +28,7 @@ import fdb.tuple
 
 from bisect import bisect_left
 
-fdb.api_version(22)
+fdb.api_version(23)
 
 doc_cache = weakref.WeakValueDictionary()
 
