@@ -4,10 +4,10 @@ python-layers
 What's here
 -----------
 
-Example layers written in Python for [FoundationDB](http://foundationdb.com/). These layers require FoundationDB [Beta 1](http://foundationdb.com/get/) to work.
+Example layers written in Python for [FoundationDB](http://foundationdb.com/). These layers require the FoundationDB [download](http://foundationdb.com/get/) to work.
 
-What are "layers"
------------------
+What are "layers"?
+------------------
 
 FoundationDB decouples its data storage technology from its data model. Layers add capabilities to FoundationDB's ordered key-value API. A layer can provide a new data model, compatibility with existing systems, or even serve as an entire framework.
 
@@ -17,7 +17,8 @@ The layers:
 -----------
 
  * **blob.py** - Arbitrary-sized and sparse large binary objects.
- * **counter.py** - High performance counters that uses advanced techniques to dynamically shard itself under high contention conditions.
+ * **bulk.py** - Bulk-loads external datasets to FoundationDB with extensible support for CSV, JSV, and blobs.
+ * **counter.py** - High-performance counter that illustrates the use of dynamic sharding for high contention conditions. Note: counters can also be implemented using an [atomic operation](http://foundationdb.com/documentation/latest/api-python.html#atomic-operations).
  * **pubsub.py** - Message passing according to the publish-subscribe pattern. Allows management of feeds and inboxes as well as message delivery.
  * **queue.py** - Queues supporting a high contention mode for multiple clients and an optimized mode for single clients.
  * **simpledoc.py** - A simple, hierarchical data model for storing document-oriented data. Supports a powerful plugin capability with indexes.
