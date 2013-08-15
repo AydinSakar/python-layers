@@ -6,30 +6,10 @@ in FoundationDB.
 
 import fdb
 import fdb.tuple
-
+from directory import directory
 import threading
 
 fdb.api_version(23)
-
-###################################
-# This defines a Subspace of keys #
-###################################
-
-class Subspace (object):
-    def __init__(self, prefixTuple, rawPrefix=""):
-        self.rawPrefix = rawPrefix + fdb.tuple.pack(prefixTuple)
-    def __getitem__(self, name):
-        return Subspace( (name,), self.rawPrefix )
-    def key(self):
-        return self.rawPrefix
-    def pack(self, tuple):
-        return self.rawPrefix + fdb.tuple.pack( tuple )
-    def unpack(self, key):
-        assert key.startswith(self.rawPrefix)
-        return fdb.tuple.unpack(key[len(self.rawPrefix):])
-    def range(self, tuple=()):
-        p = fdb.tuple.range( tuple )
-        return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
 
 ########################
 # _ImplicitTransaction #
@@ -363,7 +343,7 @@ class Vector:
 # caution: modifies the database!
 @fdb.transactional
 def vector_test(tr):
-    vector = Vector(Subspace(('test_vector',)), 0)
+    vector = Vector(directory.create_or_open(tr, ('tests','vector')), 0)
 
     with vector.use_transaction(tr):
         print 'Clearing any previous values in the vector'
@@ -491,7 +471,7 @@ import sys
 # caution: modifies the database!
 @fdb.transactional
 def vector_example(tr):
-    vector = Vector(Subspace(('my_vector',)), 0)
+    vector = Vector(directory.create_or_open(tr, ('tests','vector')), 0)
 
     with vector.use_transaction(tr):
         vector.clear()

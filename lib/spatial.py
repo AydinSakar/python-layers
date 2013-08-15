@@ -9,6 +9,7 @@ dimensionality reduction.
 
 import fdb
 import fdb.tuple
+from directory import directory
 
 fdb.api_version(23)
 
@@ -159,26 +160,6 @@ class Rect:
             assert False
         return r2
 
-###################################
-# This defines a Subspace of keys #
-###################################
-
-class Subspace (object):
-    def __init__(self, prefixTuple, rawPrefix=""):
-        self.rawPrefix = rawPrefix + fdb.tuple.pack(prefixTuple)
-    def __getitem__(self, name):
-        return Subspace( (name,), self.rawPrefix )
-    def key(self):
-        return self.rawPrefix
-    def pack(self, tuple):
-        return self.rawPrefix + fdb.tuple.pack( tuple )
-    def unpack(self, key):
-        assert key.startswith(self.rawPrefix)
-        return fdb.tuple.unpack(key[len(self.rawPrefix):])
-    def range(self, tuple=()):
-        p = fdb.tuple.range( tuple )
-        return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
-
 ################
 # SpatialIndex #
 ################
@@ -311,7 +292,7 @@ def internal_test2():
 # caution: modifies the database!
 def spatial_example():
     db = fdb.open()
-    index_location = Subspace( ('s_index', ) )
+    index_location = directory.create_or_open(db, ('tests','spatial'))
     s = SpatialIndex( index_location )
 
     s.clear(db)

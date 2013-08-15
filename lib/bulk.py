@@ -31,36 +31,15 @@ import blob
 import fdb
 import fdb.tuple
 import simpledoc
+from subspace import Subspace
 
 fdb.api_version(23)
 
 db = fdb.open(event_model="gevent")
 
-#####################################
-## This defines a Subspace of keys ##
-#####################################
-
-class Subspace (object):
-    def __init__(self, prefixTuple, rawPrefix=""):
-        self.rawPrefix = rawPrefix + fdb.tuple.pack(prefixTuple)
-    def __getitem__(self, name):
-        return Subspace( (name,), self.rawPrefix )
-    def key(self):
-        return self.rawPrefix
-    def pack(self, tuple):
-        return self.rawPrefix + fdb.tuple.pack( tuple )
-    def unpack(self, key):
-        assert key.startswith(self.rawPrefix)
-        return fdb.tuple.unpack(key[len(self.rawPrefix):])
-    def range(self, tuple=()):
-        p = fdb.tuple.range( tuple )
-        return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
-
-
 @fdb.transactional
 def clear_subspace(tr, subspace):
     tr.clear_range_startswith(subspace.key())
-
 
 ##############################
 ## Base class for the layer ##

@@ -238,3 +238,15 @@ def strinc(key):
         return key[:-1] + chr(lastc)
     else:
         return strinc(key[:-1]) + chr(lastc)
+
+if __name__ == '__main__':
+    # If run as a script, print the directory tree.  This code will not work well if there are
+    # huge numbers of directories!
+    @fdb.transactional
+    def printdirs( tr, root, indent="" ):
+        for name in root.list(tr):
+            child = root.open(tr, name)
+            print indent + name, child.layer or ""
+            printdirs( tr, child, indent + "  " )
+    db = fdb.open()
+    printdirs( db, directory )
