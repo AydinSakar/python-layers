@@ -281,7 +281,7 @@ if __name__ == "__main__":
     import time
     import fdb
 
-    fdb.api_version(22)
+    fdb.api_version(23)
     db = fdb.open()
 
     ps = PubSub(db)

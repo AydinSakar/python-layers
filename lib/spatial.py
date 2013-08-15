@@ -10,7 +10,7 @@ dimensionality reduction.
 import fdb
 import fdb.tuple
 
-fdb.api_version(23)
+fdb.api_version(100)
 
 verbose = False
 printLevels = 3

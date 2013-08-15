@@ -19,7 +19,7 @@ import os
 import fdb
 import fdb.tuple
 
-fdb.api_version(23)
+fdb.api_version(100)
 
 ###################################
 # This defines a Subspace of keys #

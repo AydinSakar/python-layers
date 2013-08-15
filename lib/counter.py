@@ -11,7 +11,7 @@ import fdb.tuple
 import random
 import os
 
-fdb.api_version(23)
+fdb.api_version(100)
 
 ###################################
 # This defines a Subspace of keys #
