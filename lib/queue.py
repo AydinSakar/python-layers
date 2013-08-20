@@ -18,28 +18,9 @@ import os
 
 import fdb
 import fdb.tuple
+from directory import directory
 
 fdb.api_version(100)
-
-###################################
-# This defines a Subspace of keys #
-###################################
-
-class Subspace (object):
-    def __init__(self, prefixTuple, rawPrefix=""):
-        self.rawPrefix = rawPrefix + fdb.tuple.pack(prefixTuple)
-    def __getitem__(self, name):
-        return Subspace( (name,), self.rawPrefix )
-    def key(self):
-        return self.rawPrefix
-    def pack(self, tuple):
-        return self.rawPrefix + fdb.tuple.pack( tuple )
-    def unpack(self, key):
-        assert key.startswith(self.rawPrefix)
-        return fdb.tuple.unpack(key[len(self.rawPrefix):])
-    def range(self, tuple=()):
-        p = fdb.tuple.range( tuple )
-        return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
 
 #########
 # Queue #
@@ -260,7 +241,7 @@ class Queue:
 ##################
 
 def queue_test(db):
-    queue = Queue(Subspace(('queue_test',)), False)
+    queue = Queue(directory.create_or_open(db, ('tests','queue')), False)
     print 'Clear Queue'
     queue.clear(db)
     print 'Empty? %s' % queue.empty(db)
@@ -286,7 +267,7 @@ def queue_test(db):
 
 # caution: modifies the database!
 def queue_single_client_example(db):
-    queue = Queue(Subspace(('queue_example',)), False)
+    queue = Queue(directory.create_or_open(db, ('tests','queue')), False)
     queue.clear(db)
 
     for i in range(10):
@@ -312,7 +293,7 @@ def queue_multi_client_example(db):
 
     for highContention in range(2):
         print 'Starting %s test' % descriptions[highContention]
-        queue = Queue(Subspace(('queue_example',)), highContention > 0)
+        queue = Queue(directory.create_or_open(db, ('tests','queue')), highContention > 0)
         queue.clear(db)
 
         pushThreads = [ threading.Thread(target=push_thread, args=(queue, db, i, 100)) for i in range(10) ]

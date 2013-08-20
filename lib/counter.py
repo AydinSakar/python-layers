@@ -1,5 +1,13 @@
 """FoundationDB High Contention Counter.
 
+NOTE: This is obsoleted for most practical purposes by the addition of atomic 
+operations (transaction.add()) to FoundationDB 0.3.0, which do the same
+thing more efficiently.
+
+However, it serves as an example of a general technique, which might be useful
+in optimizing some other associative, commutative operation which is not supported
+directly by the database.
+
 Provides the Counter class, which represents an integer value in the
 database which can be incremented, added to, or subtracted from within
 a transaction without conflict.
@@ -10,28 +18,9 @@ import fdb
 import fdb.tuple
 import random
 import os
+from directory import directory
 
 fdb.api_version(100)
-
-###################################
-# This defines a Subspace of keys #
-###################################
-
-class Subspace (object):
-    def __init__(self, prefixTuple, rawPrefix=""):
-        self.rawPrefix = rawPrefix + fdb.tuple.pack(prefixTuple)
-    def __getitem__(self, name):
-        return Subspace( (name,), self.rawPrefix )
-    def key(self):
-        return self.rawPrefix
-    def pack(self, tuple):
-        return self.rawPrefix + fdb.tuple.pack( tuple )
-    def unpack(self, key):
-        assert key.startswith(self.rawPrefix)
-        return fdb.tuple.unpack(key[len(self.rawPrefix):])
-    def range(self, tuple=()):
-        p = fdb.tuple.range( tuple )
-        return slice(self.rawPrefix + p.start, self.rawPrefix + p.stop)
 
 ###########
 # Counter #
@@ -136,7 +125,7 @@ class Counter:
 
 def counter_example_1(db, location):
 
-    location = Subspace( ('bigcounter',) )
+    location = directory.create_or_open( db, ('tests','counter') )
     c = Counter(db, location)
 
     for i in range(500):
@@ -167,7 +156,7 @@ def counter_example_2(db, location):
 
 if __name__ == "__main__":
     db = fdb.open()
-    location = Subspace( ('bigcounter',) )
+    location = directory.create_or_open( db, ('tests','counter') )
     del db[location.range()]
 
     print "doing 500 inserts in 50 threads"

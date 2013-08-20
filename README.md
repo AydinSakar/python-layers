@@ -4,7 +4,7 @@ python-layers
 What's here
 -----------
 
-Example layers written in Python for [FoundationDB](http://foundationdb.com/). These layers require the FoundationDB [download](http://foundationdb.com/get/) to work.
+Example layers written in Python for [FoundationDB](https://foundationdb.com). These layers require the FoundationDB [download](https://foundationdb.com/get) to work.
 
 What are "layers"?
 ------------------
@@ -18,15 +18,17 @@ The layers:
 
  * **blob.py** - Arbitrary-sized and sparse large binary objects.
  * **bulk.py** - Bulk-loads external datasets to FoundationDB with extensible support for CSV, JSV, and blobs.
- * **counter.py** - High-performance counter that illustrates the use of dynamic sharding for high contention conditions. Note: counters can also be implemented using an [atomic operation](http://foundationdb.com/documentation/latest/api-python.html#atomic-operations).
+ * **counter.py** - High-performance counter that illustrates the use of dynamic sharding for high contention conditions. Note: This layer was implemented prior to the release of our atomic operations. Counters can now be more effectively implemented using an [atomic operation](https://foundationdb.com/documentation/api-python.html#atomic-operations).
+ * **directory.py** - Directories for administering layers and their respective subspaces. Directories are identified by paths analogous to the paths in a Unix-like file system.
  * **pubsub.py** - Message passing according to the publish-subscribe pattern. Allows management of feeds and inboxes as well as message delivery.
  * **queue.py** - Queues supporting a high contention mode for multiple clients and an optimized mode for single clients.
  * **simpledoc.py** - A simple, hierarchical data model for storing document-oriented data. Supports a powerful plugin capability with indexes.
  * **spatial.py** - A spatial index for 2D points that allows efficient queries of axis-aligned rectangular regions. Does dimensionality reduction via a Z-order fractal curve (aka geohash).
  * **stringintern.py** - For interning (aka normalizing, aliasing) commonly-used long strings into shorter representations. Maintains the normalization state in the database, as well as a local cache for high performance.
+ * **subspace.py** - Subspaces of keys. Should be used to manage namespaces for application data.
  * **vector.py** - Vectors for storing and manipulating potentially sparse arrays.
 
 Next steps
 ----------
 
-Discussion of layers and layer development takes place on the [FoundationDB community site](http://community.foundationdb.com/). (Sign up [here](http://foundationdb.com/).)
+Discussion of layers and layer development takes place on the [FoundationDB community site](http://community.foundationdb.com). (Sign up [here](https://foundationdb.com).)
