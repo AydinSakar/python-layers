@@ -148,7 +148,7 @@ class Vector:
 
     @fdb.transactional
     def _push(self, val, tr):
-        tr[self._key_at(self.size())] = fdb.tuple.pack((val,))
+        tr[self._key_at(self._size(tr))] = fdb.tuple.pack((val,))
 
     @fdb.transactional
     def _back(self, tr):
@@ -299,7 +299,7 @@ class Vector:
 
     @fdb.transactional
     def _resize(self, length, tr):
-        currentSize = self.size()
+        currentSize = self._size(tr)
         if(length == currentSize):
             return
         if(length < currentSize):
@@ -346,6 +346,7 @@ def vector_test(tr):
     vector = Vector(directory.create_or_open(tr, ('tests','vector')), 0)
 
     with vector.use_transaction(tr):
+        print 'WITH IMPLICIT TRANSACTIONS:\n'
         print 'Clearing any previous values in the vector'
         vector.clear()
 
@@ -362,7 +363,7 @@ def vector_test(tr):
         _print_vector(vector, tr)
 
         # Pop
-        print 'Popped:', vector.pop();
+        print 'Popped:', vector.pop()
         _print_vector(vector, tr)
 
         # Clear
@@ -461,6 +462,123 @@ def vector_test(tr):
 
         _print_vector(vector, tr)
         print 'Size:', vector.size()
+
+    print '\nWITHOUT IMPLICIT TRANSACTIONS:\n'
+    print 'Clearing any previous values in the vector'
+    vector.clear(tr)
+
+    print '\nMODIFIERS'
+
+    # Set + Push
+    vector.set(0, 1, tr)
+    vector.set(1, 2, tr)
+    vector.push(3, tr)
+    _print_vector(vector, tr)
+
+    # Swap
+    vector.swap(0,2, tr)
+    _print_vector(vector, tr)
+
+    # Pop
+    print 'Popped:', vector.pop(tr)
+    _print_vector(vector, tr)
+
+    # Clear
+    vector.clear(tr)
+
+    print 'Pop empty:', vector.pop(tr)
+    _print_vector(vector, tr)
+
+    vector.push('Foo', tr)
+    print 'Pop size 1:', vector.pop(tr)
+    _print_vector(vector, tr)
+
+    print '\nCAPACITY OPERATIONS'
+
+    # Capacity
+    print 'Size:', vector.size(tr)
+    print 'Empty:', vector.empty(tr)
+
+    print 'Resizing to length 5'
+    vector.resize(5, tr)
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Setting values'
+    vector.set(0, 'The', tr)
+    vector.set(1, 'Quick', tr)
+    vector.set(2, 'Brown', tr)
+    vector.set(3, 'Fox', tr)
+    vector.set(4, 'Jumps', tr)
+    vector.set(5, 'Over', tr)
+    _print_vector(vector, tr)
+
+    print '\nFRONT'
+    print vector.front(tr)
+
+    print '\nBACK'
+    print vector.back(tr)
+
+    print '\nELEMENT ACCESS'
+    print 'Index 0:', vector.get(0, tr)
+    print 'Index 5:', vector.get(5, tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print '\nRESIZING'
+    print 'Resizing to 3'
+    vector.resize(3, tr)
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Resizing to 3 again'
+    vector.resize(3, tr)
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Resizing to 6'
+    vector.resize(6, tr)
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print '\nSPARSE TESTS'
+    print 'Popping sparse vector'
+    vector.pop(tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Resizing to 4'
+    vector.resize(4, tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Adding "word" to index 10, resize to 25'
+    vector.set(10, 'word', tr)
+    vector.resize(25, tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Popping sparse vector'
+    vector.pop(tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Swapping with sparse element'
+    vector.swap(10, 15, tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
+
+    print 'Swapping sparse elements'
+    vector.swap(12, 13, tr)
+
+    _print_vector(vector, tr)
+    print 'Size:', vector.size(tr)
 
 ##############################
 # Vector sample usage #
