@@ -81,6 +81,7 @@ class HighContentionAllocator (object):
 class DirectoryLayer (object):
 
     def __init__(self, node_subspace=Subspace(rawPrefix="\xfe"), content_subspace=Subspace()):
+        # If specified, new automatically allocated prefixes will all fall within content_subspace
         self.content_subspace = content_subspace
         self.node_subspace = node_subspace
         # The root node is the one whose contents are the node subspace
@@ -116,7 +117,7 @@ class DirectoryLayer (object):
             raise ValueError("The directory does not exist.")
 
         if prefix == None:
-            prefix = self.allocator.allocate(tr)
+            prefix = self.content_subspace.key() + self.allocator.allocate(tr)
 
         if not self._is_prefix_free(tr, prefix):
             raise ValueError("The given prefix is already in use.")
