@@ -192,7 +192,7 @@ class Vector:
         v1 = tr[k1]
         v2 = tr[k2]
 
-        if i1 > currentSize or i2 > currentSize or i1 < 0 or i2 < 0:
+        if i1 >= currentSize or i2 >= currentSize or i1 < 0 or i2 < 0:
             raise IndexError('vector.swap: indices (%d, %d) out of range' % (i1, i2))
 
         if v2.present():
