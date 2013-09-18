@@ -172,8 +172,12 @@ class DirectoryLayer (object):
         """
         if isinstance(old_path, str): old_path=(old_path,)
         if isinstance(new_path, str): new_path=(new_path,)
+
+        if old_path == new_path[:len(old_path)]:
+            raise ValueError("The destination directory cannot be a subdirectory of the source directory.")
         if self._find(tr, new_path):
             raise ValueError("The destination directory already exists. Remove it first.")
+
         old_node = self._find(tr, old_path)
         if not old_node:
             raise ValueError("The source directory does not exist.")
